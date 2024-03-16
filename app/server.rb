@@ -12,9 +12,8 @@ class YourRedisServer
     server = TCPServer.new(@port)
     loop do
       client = server.accept
-      while line = client.gets(chomp: true)
-        p line
-        client.puts "+PONG\r\n"
+      while line = client.gets
+        client.puts "+PONG\r\n" if line.downcase.start_with?('ping')
       end
       client.close
     end
