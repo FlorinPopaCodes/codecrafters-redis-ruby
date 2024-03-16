@@ -12,6 +12,7 @@ class YourRedisServer
     # puts("Logs from your program will appear here!")
 
     # TODO: EventLoop
+    storage = {}
     server = TCPServer.new(@port)
     loop do
       Thread.new(server.accept) do |client|
@@ -21,7 +22,19 @@ class YourRedisServer
           when 'PING'
             client.puts "+PONG\r\n"
           when 'ECHO'
-            client.puts "$#{parsed_command[1].size}\r\n#{parsed_command[1]}\r\n"
+            r = parsed_command[1]
+            client.puts "$#{r.size}\r\n#{r}\r\n"
+          when 'SET'
+            storage[parsed_command[1]] = parsed_command[2]
+            client.puts "+OK\r\n"
+          when 'GET'
+            p parsed_command
+            r = storage[parsed_command[1]]
+            if r
+              client.puts "$#{r.size}\r\n#{r}\r\n"
+            else
+              client.puts "$-1\r\n"
+            end
           else
             # p parsed_command[0].upcase
           end
