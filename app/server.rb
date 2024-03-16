@@ -1,4 +1,6 @@
-require "socket"
+require 'socket'
+require_relative 'command'
+require_relative 'parser'
 
 class YourRedisServer
   def initialize(port)
@@ -13,8 +15,16 @@ class YourRedisServer
     server = TCPServer.new(@port)
     loop do
       Thread.new(server.accept) do |client|
-        while line = client.gets
-          client.puts "+PONG\r\n" if line.downcase.start_with?('ping')
+        while parsed_command = Parser.parse(client)
+
+          case parsed_command[0].upcase
+          when 'PING'
+            client.puts "+PONG\r\n"
+          when 'ECHO'
+            client.puts "$#{parsed_command[1].size}\r\n#{parsed_command[1]}\r\n"
+          else
+            # p parsed_command[0].upcase
+          end
         end
         client.close
       end
