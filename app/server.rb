@@ -38,6 +38,8 @@ class YourRedisServer
             client.puts "+OK\r\n"
           when 'GET'
             r = storage[parsed_command[1]][:value]
+            puts(storage[parsed_command[1]])
+            puts(command_time)
             if r && (!storage[parsed_command[1]][:expiry] || storage[parsed_command[1]][:expiry] > command_time)
               client.puts "$#{r.size}\r\n#{r}\r\n"
             else
