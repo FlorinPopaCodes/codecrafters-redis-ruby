@@ -18,6 +18,7 @@ class YourRedisServer
     loop do
       Thread.new(server.accept) do |client|
         while parsed_command = Parser.parse(client)
+          command_time = DateTime.now.strftime('%Q').to_i
 
           case parsed_command[0].upcase
           when 'PING'
@@ -28,7 +29,7 @@ class YourRedisServer
           when 'SET'
             if px_command_index = parsed_command[3..].index { |i| i.upcase == 'PX' }
               storage[parsed_command[1]][:expiry] =
-                DateTime.now.strftime('%Q').to_i + parsed_command[px_command_index + 1].to_i
+                command_time + parsed_command[px_command_index + 1].to_i
             else
               storage[parsed_command[1]][:expiry] = nil
             end
@@ -37,8 +38,7 @@ class YourRedisServer
             client.puts "+OK\r\n"
           when 'GET'
             r = storage[parsed_command[1]][:value]
-            p storage[parsed_command[1]], DateTime.now.strftime('%Q').to_i
-            if r && (!storage[parsed_command[1]][:expiry] || storage[parsed_command[1]][:expiry] > DateTime.now.strftime('%Q').to_i)
+            if r && (!storage[parsed_command[1]][:expiry] || storage[parsed_command[1]][:expiry] > command_time)
               client.puts "$#{r.size}\r\n#{r}\r\n"
             else
               client.puts "$-1\r\n"
