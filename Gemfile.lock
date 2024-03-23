@@ -2,6 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     bindata (2.4.15)
+    optimist (3.1.0)
 
 PLATFORMS
   aarch64-linux-musl
@@ -10,6 +11,7 @@ PLATFORMS
 
 DEPENDENCIES
   bindata (~> 2.4)
+  optimist
 
 BUNDLED WITH
    2.4.18

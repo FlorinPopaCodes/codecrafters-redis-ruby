@@ -7,6 +7,7 @@ source "https://rubygems.org"
 
 # Helps with declaratively parsing binary data.
 gem "bindata", "~> 2.4"
+gem "optimist"
 
 # group :test, :development do
 #   gem "rspec"

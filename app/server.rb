@@ -1,12 +1,14 @@
-require 'optparse'
+require 'optimist'
 require 'socket'
 require 'date'
 require_relative 'command'
 require_relative 'parser'
 
 class YourRedisServer
-  def initialize(port)
-    @port = port
+  def initialize(options)
+    @port = options[:port]
+    @master = !options[:replicaof_given]
+    @master_host, @master_port = options[:replicaof]
   end
 
   def start
@@ -27,7 +29,8 @@ class YourRedisServer
             client.puts "$#{r.size}\r\n#{r}\r\n"
           when 'INFO'
             if parsed_command[1].upcase == 'REPLICATION' # TODO: replace with casecmp?
-              client.puts "$11\r\nrole:master\r\n"
+              r = "role:" + @master ? 'master' : 'slave'
+              client.puts "$#{r.size}\r\n#{r}\r\n"
             end
           when 'SET'
             if px_command_index = parsed_command[3..].index { |i| i.upcase == 'PX' }
@@ -58,12 +61,9 @@ class YourRedisServer
 end
 
 
-options = { port: 6379}
-OptionParser.new do |opts|
-  opts.banner = "Usage: server.rb [options]"
+options = Optimist::options do
+  opt :replicaof, "Specify the master host and port for replication", type: :strings
+  opt :port, "--port Specify the port number for the Redis server", default: 6379
+end
 
-  opts.on('-p', '--port PORT', 'Listening port') { |v| options[:port] = v }
-
-end.parse!
-
-YourRedisServer.new(options[:port]).start
+YourRedisServer.new(options).start
