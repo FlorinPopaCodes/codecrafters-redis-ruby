@@ -25,6 +25,10 @@ class YourRedisServer
           when 'ECHO'
             r = parsed_command[1]
             client.puts "$#{r.size}\r\n#{r}\r\n"
+          when 'INFO'
+            if parsed_command[1].upcase == 'REPLICATION' # TODO: replace with casecmp?
+              client.puts "$11\r\nrole:master\r\n"
+            end
           when 'SET'
             if px_command_index = parsed_command[3..].index { |i| i.upcase == 'PX' }
               storage[parsed_command[1]][:expiry] =
