@@ -25,18 +25,19 @@ class YourRedisServer
             r = parsed_command[1]
             client.puts "$#{r.size}\r\n#{r}\r\n"
           when 'SET'
-            storage[parsed_command[1]][:value] = parsed_command[2]
-            client.puts "+OK\r\n"
             if px_command_index = parsed_command[3..].index { |i| i.upcase == 'PX' }
               storage[parsed_command[1]][:expiry] =
-                DateTime.now.strftime('%Q').to_i + parsed_command[px_command_index + 1].to_i
+                DateTime.now.strftime('%Q').to_i + parsed_command[px_command_index + 4].to_i
             else
               storage[parsed_command[1]][:expiry] = nil
             end
+
+            storage[parsed_command[1]][:value] = parsed_command[2]
+            client.puts "+OK\r\n"
+
           when 'GET'
             r = storage[parsed_command[1]][:value]
-            puts(storage[parsed_command[1]])
-            puts(DateTime.now.strftime('%Q').to_i)
+
             if r && (!storage[parsed_command[1]][:expiry] || storage[parsed_command[1]][:expiry] > DateTime.now.strftime('%Q').to_i)
               client.puts "$#{r.size}\r\n#{r}\r\n"
             else
