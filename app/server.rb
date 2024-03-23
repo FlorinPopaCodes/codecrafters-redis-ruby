@@ -1,4 +1,5 @@
 require 'socket'
+require 'date'
 require_relative 'command'
 require_relative 'parser'
 
@@ -12,7 +13,7 @@ class YourRedisServer
     # puts("Logs from your program will appear here!")
 
     # TODO: EventLoop
-    storage = {}
+    storage = Hash.new { |k, v| k[v] = { expiry: nil } }
     server = TCPServer.new(@port)
     loop do
       Thread.new(server.accept) do |client|
@@ -25,12 +26,19 @@ class YourRedisServer
             r = parsed_command[1]
             client.puts "$#{r.size}\r\n#{r}\r\n"
           when 'SET'
-            storage[parsed_command[1]] = parsed_command[2]
+            if px_command_index = parsed_command[3..].index { |i| i.upcase == 'PX' }
+              storage[parsed_command[1]][:expiry] =
+                DateTime.now.strftime('%Q').to_i + parsed_command[px_command_index + 1].to_i
+            else
+              storage[parsed_command[1]][:expiry] = nil
+            end
+
+            storage[parsed_command[1]][:value] = parsed_command[2]
             client.puts "+OK\r\n"
           when 'GET'
-            p parsed_command
-            r = storage[parsed_command[1]]
-            if r
+            r = storage[parsed_command[1]][:value]
+            p storage[parsed_command[1]], DateTime.now.strftime('%Q').to_i
+            if r && (!storage[parsed_command[1]][:expiry] || storage[parsed_command[1]][:expiry] > DateTime.now.strftime('%Q').to_i)
               client.puts "$#{r.size}\r\n#{r}\r\n"
             else
               client.puts "$-1\r\n"
