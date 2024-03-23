@@ -1,3 +1,4 @@
+require 'optparse'
 require 'socket'
 require 'date'
 require_relative 'command'
@@ -34,7 +35,6 @@ class YourRedisServer
 
             storage[parsed_command[1]][:value] = parsed_command[2]
             client.puts "+OK\r\n"
-
           when 'GET'
             r = storage[parsed_command[1]][:value]
 
@@ -53,4 +53,13 @@ class YourRedisServer
   end
 end
 
-YourRedisServer.new(6379).start
+
+options = { port: 6379}
+OptionParser.new do |opts|
+  opts.banner = "Usage: server.rb [options]"
+
+  opts.on('-p', '--port PORT', 'Listening port') { |v| options[:port] = v }
+
+end.parse!
+
+YourRedisServer.new(options[:port]).start
